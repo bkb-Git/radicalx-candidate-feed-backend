@@ -12,6 +12,7 @@ router
 // PUT and DELETE requests made here
 
 router
+  .route("/:id")
   .put("/:id", CandidatesController.updateCandidate)
   .delete(CandidatesController.deleteCandidate);
 
