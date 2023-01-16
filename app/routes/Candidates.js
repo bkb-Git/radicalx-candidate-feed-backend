@@ -13,7 +13,7 @@ router
 
 router
   .route("/:id")
-  .put("/:id", CandidatesController.updateCandidate)
+  .put(CandidatesController.updateCandidate)
   .delete(CandidatesController.deleteCandidate);
 
 module.exports = router;
