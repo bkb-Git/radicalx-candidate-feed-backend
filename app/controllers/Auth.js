@@ -48,6 +48,10 @@ const login = asyncHandler(async (req, res) => {
   });
 });
 
+// @route POST api/signup
+// @desc Signup new user
+// @access Public
+
 const signup = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
