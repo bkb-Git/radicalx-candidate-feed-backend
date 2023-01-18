@@ -1,4 +1,5 @@
 const express = require("express");
+const passport = require("passport");
 const dotenv = require("dotenv").config();
 
 // Import candidate routes
@@ -21,9 +22,20 @@ const port = process.env.PORT || 5000;
 
 const app = express();
 
-// Candidate routes used here
+app.use(express.json()); // for parsing application/json
+app.use(express.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
 
+// Add passport as middleware
+app.use(passport.initialize());
+
+// Import Passport configuration
+require("./app/config/passport")(passport);
+
+// Candidate routes used here
 app.use("/api/candidates", routes.CandidatesRoute);
+
+// Authentication routes used here
+// app.use("/api", routes.AuthRoute);
 
 // Listening at port 5000
 
