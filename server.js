@@ -35,7 +35,7 @@ require("./app/config/passport")(passport);
 app.use("/api/candidates", routes.CandidatesRoute);
 
 // Authentication routes used here
-// app.use("/api", routes.AuthRoute);
+app.use("/api", routes.AuthRoute);
 
 // Listening at port 5000
 
