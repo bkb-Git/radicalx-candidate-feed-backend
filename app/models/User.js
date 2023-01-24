@@ -9,7 +9,6 @@ const UserSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: true,
   },
 });
 
@@ -17,18 +16,22 @@ const UserSchema = new mongoose.Schema({
 UserSchema.pre("save", function (next) {
   const user = this;
 
-  // Generate salt and hash
-  bcrypt.genSalt(10, (err, salt) => {
-    if (err) return next(err);
+  // Password is given
 
-    bcrypt.hash(user.password, salt, (err, hash) => {
+  this.password && // Generate salt and hash
+    bcrypt.genSalt(10, (err, salt) => {
       if (err) return next(err);
 
-      // Set the user's password to the hashed version
-      user.password = hash;
-      next();
+      bcrypt.hash(user.password, salt, (err, hash) => {
+        if (err) return next(err);
+
+        // Set the user's password to the hashed version
+        user.password = hash;
+        next();
+      });
     });
-  });
+
+  next();
 });
 
 // Compare the provided password against the stored hash
