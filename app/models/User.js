@@ -1,11 +1,16 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
+const regex = require("../regex/regex");
 
 const UserSchema = new mongoose.Schema({
   // Add your schema here
   email: {
     type: String,
-    required: true,
+    required: [true, "Please enter your email"],
+    validate: {
+      validator: (val) => regex.email.test(val),
+      message: (props) => `${props.value} is not a valid email address!`,
+    },
   },
   password: {
     type: String,
@@ -16,22 +21,23 @@ const UserSchema = new mongoose.Schema({
 UserSchema.pre("save", function (next) {
   const user = this;
 
-  // Password is given
-
-  this.password && // Generate salt and hash
-    bcrypt.genSalt(10, (err, salt) => {
-      if (err) return next(err);
+  //  Password is given
+  if (user.password) {
+    //Generate salt and hash
+    return bcrypt.genSalt(10, (err, salt) => {
+      err && next(err);
 
       bcrypt.hash(user.password, salt, (err, hash) => {
-        if (err) return next(err);
+        err && next(err);
 
         // Set the user's password to the hashed version
         user.password = hash;
         next();
       });
     });
+  }
 
-  next();
+  return next();
 });
 
 // Compare the provided password against the stored hash

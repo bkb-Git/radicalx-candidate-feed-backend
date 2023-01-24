@@ -24,7 +24,23 @@ const signup = asyncHandler(async (req, res) => {
   });
 
   // Save user
-  await newUser.save();
+  await newUser.save().catch((err) => {
+    const { errors } = err;
+
+    // Response json
+    const resObj = {};
+
+    // Extract object keys
+    const errorKeys = Object.keys(errors);
+
+    //Iterate errors object and retrieve messages
+    for (const key of errorKeys) {
+      resObj[key] = errors[key].message;
+    }
+
+    // Error handler on save
+    return res.status(400).json(resObj);
+  });
 
   return res.status(200).json({ message: "User successfully created" });
 });
@@ -90,11 +106,10 @@ const googleCallback = (req, res) => {
     { expiresIn: 3600 },
     // Callback function to assign token
     (err, token) => {
-      res
-        .json({
-          success: true,
-          token: "Bearer " + token,
-        })
+      res.json({
+        success: true,
+        token: "Bearer " + token,
+      });
     }
   );
 };
