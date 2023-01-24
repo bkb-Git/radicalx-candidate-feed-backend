@@ -1,29 +1,79 @@
-const passportJwt = require("passport-jwt");
-const mongoose = require("mongoose");
+const { ExtractJwt, Strategy: JwtStrategy } = require("passport-jwt");
+const { Strategy: GoogleStrategy } = require("passport-google-oauth20");
 
 const { UserModel } = require("../models");
 const keys = require("../config/keys");
 
-const { ExtractJwt, Strategy: JwtStrategy } = passportJwt;
+// Google Strategy defined here
+const googleStrategy = (passport) => {
+  passport.use(
+    new GoogleStrategy(
+      {
+        clientID: keys.GOOGLE_CLIENT_ID,
+        clientSecret: keys.GOOGLE_CLIENT_SECRET,
+        callbackURL: "http://localhost:5000/api/auth/google/callback",
+      },
+      async (accessToken, refreshToken, profile, done) => {
+        // Extract primary google email
+        const { emails } = profile;
+        const email = emails[0].value;
 
-// Define passport-jwt options here
-const opts = {
-  jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-  secretOrKey: keys.secretOrKey,
+        // Find user by email
+        const user = await UserModel.findOne({ email });
+
+        // User Exists
+        user && done(null, user);
+
+        // If not, create and save new user
+        const createdUser = new UserModel({ email });
+        const newUser = await createdUser.save();
+
+        // Return user
+        done(null, newUser);
+      }
+    )
+  );
 };
 
-// Export passport function with jwt strategy used
-module.exports = (passport) => {
-  passport.use(
+// Extract jwt from Auth Header
+
+// jwt Strategy defined here
+const jwtStrategy = (passport, type) => {
+  // Secret or Key to be used
+  const secretOrKeyToUse =
+    type === "google" ? keys.GOOGLE_CLIENT_SECRET : keys.secretOrKey;
+
+  // jwtOptions defined here
+  const opts = {
+    jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+    secretOrKey: secretOrKeyToUse,
+  };
+
+  return passport.use(
     new JwtStrategy(opts, (jwt_payload, done) => {
+      // Find user by id
       UserModel.findById(jwt_payload.id)
         .then((user) => {
+          // User exists, return user object
           if (user) {
             return done(null, user);
           }
+          // Else return false;
           return done(null, false);
         })
         .catch((err) => console.log(err));
     })
   );
+};
+
+// Export passport function with jwt strategy used
+module.exports = (passport) => {
+  // Jwt Strategy generic secret
+  jwtStrategy(passport);
+
+  // Jwt Strategy with google secret
+  jwtStrategy(passport, "google");
+
+  //Google strategy called here
+  googleStrategy(passport);
 };
