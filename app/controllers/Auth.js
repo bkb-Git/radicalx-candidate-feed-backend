@@ -1,11 +1,35 @@
 const jwt = require("jsonwebtoken");
-const bcrypt = require("bcrypt");
 const asyncHandler = require("express-async-handler");
 
 const { UserModel } = require("../models");
 const keys = require("../config/keys");
 
-// @route POST api/login
+// @route POST api/auth/signup
+// @desc Signup new user
+// @access Public
+
+const signup = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
+
+  // Find email that may exit
+  const user = await UserModel.findOne({ email });
+
+  //Check if email already exists
+  user && res.status(409).json({ message: "Email already exists" });
+
+  // Create new user
+  const newUser = new UserModel({
+    email,
+    password,
+  });
+
+  // Save user
+  await newUser.save();
+
+  return res.status(200).json({ message: "User successfully created" });
+});
+
+// @route POST api/auth/login
 // @desc Login user and return JWT token
 // @access Public
 
@@ -48,34 +72,37 @@ const login = asyncHandler(async (req, res) => {
   });
 });
 
-// @route POST api/signup
-// @desc Signup new user
+// @route GET api/auth/google/callback
+// @desc sign token for google user sign in
 // @access Public
 
-const signup = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
+const googleCallback = (req, res) => {
+  // User payload
+  const userPayload = {
+    id: req.user.id,
+    email: req.user.email,
+  };
 
-  // Find email that may exit
-  const user = await UserModel.findOne({ email });
-
-  //Check if email already exists
-  user && res.status(409).json({ message: "Email already exists" });
-
-  // Create new user
-  const newUser = new UserModel({
-    email,
-    password,
-  });
-
-  // Save user
-  await newUser.save();
-
-  return res.status(200).json({ message: "User successfully created" });
-});
+  // Sign Token
+  return jwt.sign(
+    userPayload,
+    keys.GOOGLE_CLIENT_SECRET,
+    { expiresIn: 3600 },
+    // Callback function to assign token
+    (err, token) => {
+      res
+        .json({
+          success: true,
+          token: "Bearer " + token,
+        })
+    }
+  );
+};
 
 const AuthController = {
   login,
   signup,
+  googleCallback,
 };
 
 module.exports = AuthController;
