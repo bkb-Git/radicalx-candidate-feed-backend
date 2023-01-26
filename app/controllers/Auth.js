@@ -29,6 +29,26 @@ const signup = asyncHandler(async (req, res) => {
   return res.status(200).json({ message: "User successfully created" });
 });
 
+// @route POST api/auth/verifyEmail
+// @desc check for existing email
+// @access Public
+
+const verifyEmail = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  // Check if user exists
+  const user = await UserModel.findOne({ email });
+
+  // If user doesn't exist, reply not found
+  !user &&
+    res
+      .status(404)
+      .json({ userFound: false, message: "This email address does not exist" });
+
+  // Respond with user email
+  return res.status(200).json({ userFound: true, email });
+});
+
 // @route POST api/auth/login
 // @desc Login user and return JWT token
 // @access Public
@@ -90,11 +110,10 @@ const googleCallback = (req, res) => {
     { expiresIn: 3600 },
     // Callback function to assign token
     (err, token) => {
-      res
-        .json({
-          success: true,
-          token: "Bearer " + token,
-        })
+      res.json({
+        success: true,
+        token: "Bearer " + token,
+      });
     }
   );
 };
@@ -102,6 +121,7 @@ const googleCallback = (req, res) => {
 const AuthController = {
   login,
   signup,
+  verifyEmail,
   googleCallback,
 };
 
