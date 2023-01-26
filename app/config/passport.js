@@ -35,8 +35,6 @@ const googleStrategy = (passport) => {
   );
 };
 
-// Extract jwt from Auth Header
-
 // jwt Strategy defined here
 const jwtStrategy = (passport, type) => {
   // Secret or Key to be used

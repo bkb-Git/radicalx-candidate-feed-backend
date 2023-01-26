@@ -72,6 +72,17 @@ const login = asyncHandler(async (req, res) => {
   });
 });
 
+const checkEmail = asyncHandler(async (req, res) => {
+  // Api call to db to check email
+  const { email } = req.body;
+
+  return res.status(200).json({
+    userFound: true,
+    err: "User not found",
+    email,
+  });
+});
+
 // @route GET api/auth/google/callback
 // @desc sign token for google user sign in
 // @access Public
@@ -103,6 +114,7 @@ const AuthController = {
   login,
   signup,
   googleCallback,
+  checkEmail,
 };
 
 module.exports = AuthController;

@@ -1,6 +1,7 @@
 const express = require("express");
 const passport = require("passport");
 const dotenv = require("dotenv").config();
+const cors = require("cors");
 
 // Import candidate routes
 
@@ -19,8 +20,17 @@ connectDB();
 const port = process.env.PORT || 5000;
 
 // Express app called here
-
 const app = express();
+
+// Add cors
+
+app.use(
+  cors({
+    origin: "http://localhost:3002",
+    methods: ["GET", "POST"],
+    credentials: true,
+  })
+);
 
 app.use(express.json()); // for parsing application/json
 app.use(express.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
@@ -35,7 +45,7 @@ require("./app/config/passport")(passport);
 app.use("/api/candidates", routes.CandidatesRoute);
 
 // Authentication routes used here
-app.use("/api/auth", routes.AuthRoute);
+app.use("/api/auth", cors(), routes.AuthRoute);
 
 // Listening at port 5000
 
