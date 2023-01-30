@@ -21,21 +21,19 @@ const UserSchema = new mongoose.Schema({
 UserSchema.pre("save", function (next) {
   const user = this;
 
-  //  Password is given
-  if (user.password) {
-    //Generate salt and hash
-    return bcrypt.genSalt(10, (err, salt) => {
-      err && next(err);
+  // Password is given
+  this.password && // Generate salt and hash
+    bcrypt.genSalt(10, (err, salt) => {
+      if (err) return next(err);
 
       bcrypt.hash(user.password, salt, (err, hash) => {
-        err && next(err);
+        if (err) return next(err);
 
         // Set the user's password to the hashed version
         user.password = hash;
         next();
       });
     });
-  }
 
   return next();
 });
