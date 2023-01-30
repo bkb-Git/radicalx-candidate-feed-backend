@@ -11,7 +11,7 @@ const keys = require("../config/keys");
 const signup = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
-  // Find email that may exit
+  // Find email that may exist
   const user = await UserModel.findOne({ email });
 
   //Check if email already exists
@@ -36,7 +36,7 @@ const signup = asyncHandler(async (req, res) => {
 const verifyEmail = asyncHandler(async (req, res) => {
   const { email } = req.body;
 
-  // Check if user exists
+  // Find user by email
   const user = await UserModel.findOne({ email });
 
   // If user doesn't exist, reply not found
@@ -59,7 +59,7 @@ const login = asyncHandler(async (req, res) => {
   // Find user by email
   const user = await UserModel.findOne({ email });
 
-  // Check if user exists
+  // If user doesn't exist
   !user && res.status(404).json({ message: "User not found" });
 
   // Check password
@@ -88,7 +88,7 @@ const login = asyncHandler(async (req, res) => {
     }
 
     // Password did not match
-    return res.status(400).json({ password: "Password incorrect" });
+    return res.status(400).json({ message: "Password incorrect" });
   });
 });
 
