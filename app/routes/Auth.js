@@ -10,6 +10,9 @@ router.post("/signup", AuthController.signup);
 // Login router defined here
 router.post("/login", AuthController.login);
 
+// Check email route defined here
+router.post("/verifyEmail", AuthController.verifyEmail);
+
 // Google login router  defined here
 router.get(
   "/google",
@@ -21,7 +24,7 @@ router.get(
   "/google/callback",
   passport.authenticate("google", {
     failureMessage: true,
-    session: false
+    session: false,
   }),
   AuthController.googleCallback
 );

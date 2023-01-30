@@ -17,8 +17,7 @@ UserSchema.pre("save", function (next) {
   const user = this;
 
   // Password is given
-
-  this.password && // Generate salt and hash
+  user.password && // Generate salt and hash
     bcrypt.genSalt(10, (err, salt) => {
       if (err) return next(err);
 
