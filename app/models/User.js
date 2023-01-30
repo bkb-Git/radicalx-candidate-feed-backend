@@ -1,11 +1,16 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
+const regex = require("../regex/regex");
 
 const UserSchema = new mongoose.Schema({
   // Add your schema here
   email: {
     type: String,
-    required: true,
+    required: [true, "Please enter your email"],
+    validate: {
+      validator: (val) => regex.email.test(val),
+      message: (props) => `${props.value} is not a valid email address!`,
+    },
   },
   password: {
     type: String,
@@ -30,7 +35,7 @@ UserSchema.pre("save", function (next) {
       });
     });
 
-  next();
+  return next();
 });
 
 // Compare the provided password against the stored hash
