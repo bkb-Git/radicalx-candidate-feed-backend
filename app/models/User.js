@@ -15,6 +15,11 @@ const UserSchema = new mongoose.Schema({
   password: {
     type: String,
     required: () => this.signUpMethod !== "google",
+    validate: {
+      validator: (val) => regex.password.test(val),
+      message: () =>
+        "Password must be 6 characters long, contain at least 1 upper case letter, one lower case letter and 1 digit",
+    },
   },
   signUpMethod: {
     type: String,
