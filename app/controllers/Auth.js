@@ -21,6 +21,7 @@ const signup = asyncHandler(async (req, res) => {
   const newUser = new UserModel({
     email,
     password,
+    signUpMethod: "local",
   });
 
   // Save user
