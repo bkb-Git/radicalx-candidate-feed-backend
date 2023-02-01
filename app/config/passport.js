@@ -25,7 +25,7 @@ const googleStrategy = (passport) => {
         user && done(null, user);
 
         // If not, create and save new user
-        const createdUser = new UserModel({ email });
+        const createdUser = new UserModel({ email, signUpMethod: "google" });
         const newUser = await createdUser.save();
 
         // Return user
