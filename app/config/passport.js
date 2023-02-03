@@ -21,15 +21,18 @@ const googleStrategy = (passport) => {
         // Find user by email
         const user = await UserModel.findOne({ email });
 
-        // User Exists
-        user && done(null, user);
+        // Function to create new user
+        const createNewUser = async (signUpData) => {
+          const createdUser = new UserModel(signUpData);
+          const newUser = await createdUser.save();
 
-        // If not, create and save new user
-        const createdUser = new UserModel({ email, signUpMethod: "google" });
-        const newUser = await createdUser.save();
+          return done(null, newUser);
+        };
 
-        // Return user
-        done(null, newUser);
+        // If user exists ? return user : create new user
+        user
+          ? done(null, user)
+          : createNewUser({ email, signUpMethod: "google" });
       }
     )
   );
@@ -54,12 +57,9 @@ const jwtStrategy = (passport, type) => {
       // Find user by id
       UserModel.findById(jwt_payload.id)
         .then((user) => {
-          // User exists, return user object
-          if (user) {
-            return done(null, user);
-          }
-          // Else return false;
-          return done(null, false);
+          // User exists, return user object : return false
+          user ? done(null, user) : done(null, false);
+        
         })
         .catch((err) => console.log(err));
     })

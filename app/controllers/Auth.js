@@ -14,36 +14,41 @@ const signup = asyncHandler(async (req, res) => {
   // Find email that may exist
   const user = await UserModel.findOne({ email });
 
-  //Check if email already exists
-  user && res.status(409).json({ message: "Email already exists" });
+  // Function to create user
+  const createNewUser = async (signUpData) => {
+    // Create new user
+    const newUser = new UserModel(signUpData);
 
-  // Create new user
-  const newUser = new UserModel({
-    email,
-    password,
-    signUpMethod: "local",
-  });
+    // Save user
+    await newUser.save().catch((err) => {
+      const { errors } = err;
 
-  // Save user
-  await newUser.save().catch((err) => {
-    const { errors } = err;
+      // Response json
+      const resObj = {};
 
-    // Response json
-    const resObj = {};
+      // Extract object keys
+      const errorKeys = Object.keys(errors);
 
-    // Extract object keys
-    const errorKeys = Object.keys(errors);
+      //Iterate errors object and retrieve messages
+      for (const key of errorKeys) {
+        resObj[key] = errors[key].message;
+      }
 
-    //Iterate errors object and retrieve messages
-    for (const key of errorKeys) {
-      resObj[key] = errors[key].message;
-    }
+      // Error handler on save
+      return res.status(400).json(resObj);
+    });
 
-    // Error handler on save
-    return res.status(400).json(resObj);
-  });
+    return res.status(200).json({ message: "User successfully created" });
+  };
 
-  return res.status(200).json({ message: "User successfully created" });
+  // User exists ? return "Email already exists" : create new user
+  user
+    ? res.status(409).json({ message: "Email already exists" })
+    : createNewUser({
+        email,
+        password,
+        signUpMethod: "local",
+      });
 });
 
 // @route POST api/auth/verifyEmail
@@ -56,14 +61,13 @@ const verifyEmail = asyncHandler(async (req, res) => {
   // Find user by email
   const user = await UserModel.findOne({ email });
 
-  // If user doesn't exist, reply not found
-  !user &&
-    res
-      .status(404)
-      .json({ userFound: false, message: "This email address does not exist" });
-
-  // Respond with user email
-  return res.status(200).json({ userFound: true, email });
+  // user exists ? return true with email : return false with message
+  user
+    ? res.status(200).json({ userFound: true, email })
+    : res.status(404).json({
+        userFound: false,
+        message: "This email address does not exist",
+      });
 });
 
 // @route POST api/auth/login
@@ -76,40 +80,29 @@ const login = asyncHandler(async (req, res) => {
   // Find user by email
   const user = await UserModel.findOne({ email });
 
-  // If user doesn't exist
-  !user && res.status(404).json({ message: "User not found" });
-
-  // Check password
-  await user.comparePassword(password, (err, isMatch) => {
-    // Password matched
-    if (isMatch) {
-      // Create JWT Payload
-      const userPayload = {
-        id: user.id,
-        email: user.email,
-      };
-
-      // Sign Token
-      return jwt.sign(
-        userPayload,
-        keys.secretOrKey,
-        { expiresIn: 3600 },
-        // Callback function to assign token
-        (err, token) => {
-          res.json({
-            success: true,
-            token: "Bearer " + token,
-          });
-        }
-      );
-    }
-
-    // Password did not match
-    return res.status(400).json({ message: "Password incorrect" });
-  });
+  // User does not exist ? return user not found : comparePassword 
+  !user
+    ? res.status(404).json({ message: "User not found" })
+    : await user.comparePassword(password, (err, isMatch) => {
+        // Password match ? sign token : password incorrect
+        isMatch
+          ? jwt.sign(
+              { id: user.id, email: user.email },
+              keys.secretOrKey,
+              { expiresIn: 3600 },
+              // Callback function to assign token
+              (err, token) => {
+                res.json({
+                  success: true,
+                  token: "Bearer " + token,
+                });
+              }
+            )
+          : res.status(400).json({ message: "Password incorrect" });
+      });
 });
 
-// @route GET api/auth/google/callback
+// @route  GET api/auth/google/callback
 // @desc sign token for google user sign in
 // @access Public
 

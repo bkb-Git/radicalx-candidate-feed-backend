@@ -14,7 +14,9 @@ const UserSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: () => this.signUpMethod !== "google",
+    required: function () {
+      return this.signUpMethod === "local";
+    },
     validate: {
       validator: (val) => regex.password.test(val),
       message: () =>
@@ -30,30 +32,31 @@ const UserSchema = new mongoose.Schema({
 // Encrypt the password before saving in the database
 UserSchema.pre("save", function (next) {
   const user = this;
+  const { password } = user;
 
-  // Password is given
-  user.password && // Generate salt and hash
-    bcrypt.genSalt(10, (err, salt) => {
-      if (err) return next(err);
-
-      bcrypt.hash(user.password, salt, (err, hash) => {
+  // If password is provided ? Hash password : move to next middleware
+  password
+    ? bcrypt.genSalt(10, (err, salt) => {
         if (err) return next(err);
 
-        // Set the user's password to the hashed version
-        user.password = hash;
-        next();
-      });
-    });
+        return bcrypt.hash(user.password, salt, (err, hash) => {
+          err && next(err);
 
-  return next();
+          // Set the user's password to the hashed version
+          if (!err) {
+            user.password = hash;
+            next();
+          }
+        });
+      })
+    : next();
 });
 
 // Compare the provided password against the stored hash
 UserSchema.methods.comparePassword = function (password, cb) {
-  bcrypt.compare(password, this.password, (err, isMatch) => {
-    if (err) return cb(err);
-    cb(null, isMatch);
-  });
+  bcrypt.compare(password, this.password, (err, isMatch) =>
+    err ? cb(err) : cb(null, isMatch)
+  );
 };
 
 // Create the model
