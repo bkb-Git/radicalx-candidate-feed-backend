@@ -37,17 +37,18 @@ UserSchema.pre("save", function (next) {
   // If password is provided ? Hash password : move to next middleware
   password
     ? bcrypt.genSalt(10, (err, salt) => {
-        if (err) return next(err);
+      // error ? return err : hash password
+        err
+          ? next(err)
+          : bcrypt.hash(password, salt, (err, hash) => {
+              err && next(err);
 
-        return bcrypt.hash(user.password, salt, (err, hash) => {
-          err && next(err);
-
-          // Set the user's password to the hashed version
-          if (!err) {
-            user.password = hash;
-            next();
-          }
-        });
+              // Set the user's password to the hashed version
+              if (!err) {
+                user.password = hash;
+                next();
+              }
+            });
       })
     : next();
 });
